@@ -2,18 +2,22 @@ import rasterio
 import numpy as np
 
 with rasterio.open("dmr5g_opalena.tif") as src:         #with = otevře a po skončení zavře soubor
-    dem = src.read(1).astype("float32")
+    dem = src.read(1).astype("float32")                 
     # ted jsem načetl data do pole dem
     meta = src.meta
-    # meta
-    cellsize = src.res[0]
+    # meta obsahuje informace o souboru (rozměry, datový typ, souřadnicový systém, atd.)
+    cellsize = src.res[0] # velikost buňky v metrech (předpokládáme čtvercové buňky)
     print(f"Rozměry: {dem.shape}, velikost buňky: {cellsize} m")
 
 #výpočet gradientu
 dzdx, dzdy = np.gradient(dem, cellsize)
+print("Gradient spočítán.")
+print(f"dzdx: min {dzdx.min():.2f}, max {dzdx.max():.2f}, průměr {dzdx.mean():.2f}")
 
 #výpočet sklonu ve stupních
 slope = np.degrees(np.arctan(np.sqrt(dzdx**2 + dzdy**2)))
+print("Sklon spočítán.")
+print(f"Sklon: min {slope.min():.2f}, max {slope.max():.2f}, průměr {slope.mean():.2f}")
 
 #uložení výstupu
 meta.update(dtype="float32", count=1)
