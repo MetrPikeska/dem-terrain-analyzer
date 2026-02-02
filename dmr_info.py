@@ -63,6 +63,62 @@ def find_local_extrema(dem, window_size=3):
                 minima[i, j] = True
     return maxima, minima
 
+def calculate_flow_direction(dem):
+    """Vypočítá směr, kterým by tekla voda (D8 algoritmus)"""
+    rows, cols = dem.shape
+    flow_dir = np.zeros_like(dem, dtype=int)
+    
+    # Kódy směrů (mocniny 2)
+    # 32  64  128
+    # 16   X   1
+    # 8    4   2
+    directions = [(0, 1, 1), (-1, 1, 2), (-1, 0, 4), (-1, -1, 8),
+                  (0, -1, 16), (1, -1, 32), (1, 0, 64), (1, 1, 128)]
+    
+    for i in range(1, rows - 1):
+        for j in range(1, cols - 1):
+            current_elevation = dem[i, j]
+            max_slope = -999999
+            direction = 0
+            
+            # Najdi směr s největším sklonem
+            for di, dj, code in directions:
+                neighbor_elevation = dem[i + di, j + dj]
+                slope = current_elevation - neighbor_elevation
+                
+                if slope > max_slope:
+                    max_slope = slope
+                    direction = code
+            
+            flow_dir[i, j] = direction
+    
+    return flow_dir
+
+def detect_ridges_valleys(curvature, threshold=0.1):
+    """Detekuje hřbety (kladné zakřivení) a údolí (záporné)"""
+    rows, cols = curvature.shape
+    ridges = np.zeros_like(curvature, dtype=bool)
+    valleys = np.zeros_like(curvature, dtype=bool)
+    
+    ridge_count = 0
+    valley_count = 0
+    
+    for i in range(rows):
+        for j in range(cols):
+            curv = curvature[i, j]
+            
+            if curv > threshold:
+                ridges[i, j] = True
+                ridge_count += 1
+            elif curv < -threshold:
+                valleys[i, j] = True
+                valley_count += 1
+    
+    print(f"Nalezeno hřbetů: {ridge_count}")
+    print(f"Nalezeno údolí: {valley_count}")
+    
+    return ridges, valleys
+
 # Hlavní část skriptu
 input_file = "dmr5g_opalena.tif"  # Zadejte cestu k vašemu DEM souboru
 out_name = os.path.splitext(os.path.basename(input_file))[0]
@@ -110,6 +166,19 @@ with rasterio.open(input_file) as src:
     print("Lokální maxima nalezena a uložena.")
     save_raster(local_extrema[1].astype("float32"), meta, f"{output_dir}/local_minima_{out_name}.tif")
     print("Lokální minima nalezena a uložena.")
+
+    # Směr toku
+    flow_direction = calculate_flow_direction(dem)
+    save_raster(flow_direction.astype("float32"), meta, f"{output_dir}/flow_direction_{out_name}.tif")
+    print("Směr toku spočítán a uložen.")  
+
+    # Detekce hřbetů a údolí
+    ridges, valleys = detect_ridges_valleys(curvature)
+    save_raster(ridges.astype("float32"), meta, f"{output_dir}/ridges_{out_name}.tif")
+    print("Hřbety detekovány a uloženy.")
+    save_raster(valleys.astype("float32"), meta, f"{output_dir}/valleys_{out_name}.tif")
+    print("Údolí detekována a uložena.")
+    
 
 
 
