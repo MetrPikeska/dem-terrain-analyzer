@@ -38,6 +38,29 @@ def save_raster(data, meta, filename):
     with rasterio.open(filename, "w", **meta) as dst:
         dst.write(data, 1)
 
+def find_local_extrema(dem, window_size=3):
+    """Najde lokální maxima a minima v DEM pomocí filtru."""
+    rows, cols = dem.shape
+    maxima = np.zeros_like(dem, dtype=bool)
+    minima = np.zeros_like(dem, dtype=bool)
+
+    offset = window_size // 2
+
+    for i in range(offset, rows - offset):
+        for j in range(offset, cols - offset):
+            # Výřez okolí
+            window = dem[i - offset:i + offset + 1, j - offset:j + offset + 1]
+            center = dem[i, j]
+
+            #je to maximum??
+            if center == np.max(window):
+                maxima[i, j] = True
+
+            #je to minimum??
+            if center == np.min(window):
+                minima[i, j] = True
+    return maxima, minima
+
 # Hlavní část skriptu
 input_file = "dmr5g_opalena.tif"  # Zadejte cestu k vašemu DEM souboru
 out_name = os.path.splitext(os.path.basename(input_file))[0]
@@ -78,6 +101,15 @@ with rasterio.open(input_file) as src:
     high_pass = apply_high_pass_filter(dem)
     save_raster(high_pass, meta, f"{output_dir}/high_pass_{out_name}.tif")
     print("High-pass filtr aplikován a uložen.")
+
+    # Lokální extrémy
+    local_extrema = find_local_extrema(dem)
+    save_raster(local_extrema[0].astype("float32"), meta, f"{output_dir}/local_maxima_{out_name}.tif")
+    print("Lokální maxima nalezena a uložena.")
+    save_raster(local_extrema[1].astype("float32"), meta, f"{output_dir}/local_minima_{out_name}.tif")
+    print("Lokální minima nalezena a uložena.")
+
+
 
 
 
