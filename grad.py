@@ -19,8 +19,21 @@ with rasterio.open("dmr5g_opalena.tif") as src:         #with = otevře a po sko
 #vypocet statistik
 print(f"DEM: min {dem.min():.2f}, max {dem.max():.2f}, průměr {dem.mean():.2f}")
 
+threshold = float(input("Zadejte prahovou hodnotu nadmořské výšky (m): "))
+def filter_pixels(dem, threshold):
+    below_threshold = dem < threshold
+    above_threshold = dem >= threshold
+
+    print(f"Počet pixelů pod {threshold} m: {np.sum(below_threshold)}")
+    print(f"Počet pixelů nad {threshold} m: {np.sum(above_threshold)}")
+    
+    #return below_threshold, above_threshold 
+
+filter_pixels(dem, threshold)
+
+
 #výpočet gradientu
-dzdx, dzdy = np.gradient(dem, cellsize)
+#dzdx, dzdy = np.gradient(dem, cellsize) # 
 # print("Gradient spočítán.")
 # print(f"dzdx: min {dzdx.min():.2f}, max {dzdx.max():.2f}, průměr {dzdx.mean():.2f}")
 # #výpočet sklonu ve stupních
