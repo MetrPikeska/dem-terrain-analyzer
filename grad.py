@@ -19,6 +19,8 @@ with rasterio.open("dmr5g_opalena.tif") as src:         #with = otevře a po sko
 #vypocet statistik
 print(f"DEM: min {dem.min():.2f}, max {dem.max():.2f}, průměr {dem.mean():.2f}")
 
+
+#filtrace pixelů podle nadmořské výšky
 threshold = float(input("Zadejte prahovou hodnotu nadmořské výšky (m): "))
 def filter_pixels(dem, threshold):
     below_threshold = dem < threshold
