@@ -41,6 +41,8 @@ def save_raster(data, meta, filename):
 def find_local_extrema(dem, window_size=3):
     """Najde lokální maxima a minima v DEM pomocí filtru."""
     rows, cols = dem.shape
+    print(f"dem ma: {rows} radku a {cols} sloupcu")
+    print(f"Finding local extrema in DEM of shape {dem.shape} with window size {window_size}")
     maxima = np.zeros_like(dem, dtype=bool)
     minima = np.zeros_like(dem, dtype=bool)
 
